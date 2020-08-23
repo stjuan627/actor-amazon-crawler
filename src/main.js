@@ -45,9 +45,10 @@ Apify.main(async () => {
         console.log(searchUrl.url);
         await requestQueue.addRequest(searchUrl);
     }
-    const proxyConfiguration = { ...input.proxy };
+    const proxyConfiguration = new Apify.createProxyConfiguration()
+    const proxy = { ...input.proxy };
     const cloudFlareUnBlocker = new CloudFlareUnBlocker({
-        proxyConfiguration,
+        proxyConfiguration: proxy,
     });
 
     // Create crawler.
@@ -61,6 +62,7 @@ Apify.main(async () => {
                 maxUsageCount: 50,
             },
         },
+        proxyConfiguration,
         maxConcurrency: input.maxConcurrency || 5,
         maxRequestsPerCrawl: limitResults || null,
         handlePageTimeoutSecs: 2.5 * 60,
@@ -125,6 +127,7 @@ Apify.main(async () => {
                 maxUsageCount: 50,
             },
         },
+        proxyConfiguration,
         maxConcurrency: input.maxConcurrency || 5,
         maxRequestsPerCrawl: limitResults || null,
         handlePageTimeoutSecs: 2.5 * 60,
