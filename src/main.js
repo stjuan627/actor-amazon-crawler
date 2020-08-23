@@ -45,7 +45,7 @@ Apify.main(async () => {
         console.log(searchUrl.url);
         await requestQueue.addRequest(searchUrl);
     }
-    const proxyConfiguration = new Apify.createProxyConfiguration()
+    const proxyConfiguration = await Apify.createProxyConfiguration();
     const proxy = { ...input.proxy };
     const cloudFlareUnBlocker = new CloudFlareUnBlocker({
         proxyConfiguration: proxy,
