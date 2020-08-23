@@ -10,6 +10,7 @@ const { log } = Apify.utils;
 // TODO: Add an option to limit number of results for each keyword
 Apify.main(async () => {
     // Get queue and enqueue first url.
+    const proxyConfiguration = await Apify.createProxyConfiguration();
     const requestQueue = await Apify.openRequestQueue();
     const input = await Apify.getValue('INPUT');
     const env = await Apify.getEnv();
@@ -45,7 +46,7 @@ Apify.main(async () => {
         console.log(searchUrl.url);
         await requestQueue.addRequest(searchUrl);
     }
-    const proxyConfiguration = await Apify.createProxyConfiguration();
+
     const proxy = { ...input.proxy };
     const cloudFlareUnBlocker = new CloudFlareUnBlocker({
         proxyConfiguration: proxy,
@@ -133,8 +134,9 @@ Apify.main(async () => {
         handlePageTimeoutSecs: 2.5 * 60,
         handleRequestTimeoutSecs: 60,
         persistCookiesPerSession: true,
-        handlePageFunction: async ({ page, request, session }) => {
+        handlePageFunction: async ({ page, request, session, proxyInfo }) => {
             const { url, userData, userData: { label } } = request;
+            console.log('request url with proxy', url, proxyInfo)
             try {
                 await page.waitFor(3000);
                 await page.waitForSelector('#a-popover-root');
