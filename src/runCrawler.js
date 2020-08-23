@@ -59,7 +59,11 @@ async function runCrawler(params) {
         // extract info about item and about seller offers
     } else if (label === 'detail') {
         try {
-            await detailParser($, request, requestQueue, getReviews);
+            const item = await detailParser($, request, requestQueue, getReviews);
+            if (item) {
+                log.info(`Saving item url: ${request.url}`)
+                await saveItem('RESULT', request, item, input, env.defaultDatasetId, session);
+            }
         } catch (e) {
             log.error('Detail parsing failed', e);
         }
@@ -68,6 +72,7 @@ async function runCrawler(params) {
             await parseItemReviews($, request, requestQueue);
         } catch (e) {
             log.error('Reviews parsing failed', e);
+            await saveItem('NORESULT', request, null, input, env.defaultDatasetId);
         }
     } else if (label === 'seller') {
         try {
