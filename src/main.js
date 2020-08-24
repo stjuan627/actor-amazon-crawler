@@ -146,7 +146,7 @@ Apify.main(async () => {
                     //     contentType: 'image/jpeg',
                     //     body: placeholderImageBuffer,
                     // })
-                    req.abort()
+                    return req.abort()
                 }
                 return req.continue()
             });
