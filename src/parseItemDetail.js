@@ -8,7 +8,13 @@ async function parseItemDetail($, request, session, requestQueue, getReviews) {
     const item = {};
 
     const titleElem = $('#productTitle')
-    const priceElem = $('#priceblock_ourprice')
+    let priceElem = $('#price_inside_buybox')
+    if (!priceElem.length) {
+        priceElem = $('#priceblock_ourprice')
+    }
+    if (!priceElem.length) {
+        priceElem = $('#priceblock_saleprice')
+    }
 
     if (!titleElem.length || !priceElem.length) {
         session.markBad()
