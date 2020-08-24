@@ -12,7 +12,6 @@ async function parseItemDetail($, request, session, requestQueue, getReviews) {
 
     if (!titleElem.length || !priceElem.length) {
         session.markBad()
-        // request.retryCount++
         throw new Error('Price not found. Session maybe blocked. Rotate session')
     }
 

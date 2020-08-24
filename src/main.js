@@ -155,7 +155,7 @@ Apify.main(async () => {
         },
         handlePageFunction: async ({ page, request, session, proxyInfo }) => {
             const { url, userData, userData: { label } } = request;
-            log.info('request url with proxy', url, request.retryCount, proxyInfo)
+            console.log('request url with proxy', url, request.retryCount, proxyInfo)
             try {
                 await page.waitFor(3000);
                 await page.waitForSelector('#a-popover-root');
