@@ -138,6 +138,21 @@ Apify.main(async () => {
         handlePageTimeoutSecs: 2.5 * 60,
         handleRequestTimeoutSecs: 60,
         persistCookiesPerSession: true,
+        gotoFunction: async ({ page, request }) => {
+            await puppeteer.addInterceptRequestHandler(page, (request) => {
+                if (request.resourceType() === 'image' || request.resourceType() === 'video') {
+                    // return request.respond({
+                    //     statusCode: 200,
+                    //     contentType: 'image/jpeg',
+                    //     body: placeholderImageBuffer,
+                    // })
+                    request.abort()
+                }
+                return request.continue()
+            });
+
+            return puppeteer.gotoExtended(page, request, { timeout: 60 * 1000 })
+        },
         handlePageFunction: async ({ page, request, session, proxyInfo }) => {
             const { url, userData, userData: { label } } = request;
             console.log('request url with proxy', url, proxyInfo)
@@ -200,18 +215,6 @@ Apify.main(async () => {
             await Apify.setValue(`bug_${Math.random()}.html`, $('body').html(), { contentType: 'text/html' });
         },
     })
-
-    await puppeteer.addInterceptRequestHandler((page, request) => {
-        if (request.resourceType() === 'image' || request.resourceType() === 'video') {
-            // return request.respond({
-            //     statusCode: 200,
-            //     contentType: 'image/jpeg',
-            //     body: placeholderImageBuffer,
-            // })
-            request.abort()
-        }
-        return request.continue()
-    });
 
     scraper === true ? await pptr.run() : await crawler.run();
 });
