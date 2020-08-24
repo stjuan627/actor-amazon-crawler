@@ -1,5 +1,6 @@
 /* global $, window */
 const Apify = require('apify');
+const { puppeteer } = Apify.utils;
 const cheerio = require('cheerio');
 const createSearchUrls = require('./createSearchUrls');
 const CloudFlareUnBlocker = require('./unblocker');
@@ -199,5 +200,18 @@ Apify.main(async () => {
             await Apify.setValue(`bug_${Math.random()}.html`, $('body').html(), { contentType: 'text/html' });
         },
     })
+
+    await puppeteer.addInterceptRequestHandler((page, request) => {
+        if (request.resourceType() === 'image' || request.resourceType() === 'video') {
+            // return request.respond({
+            //     statusCode: 200,
+            //     contentType: 'image/jpeg',
+            //     body: placeholderImageBuffer,
+            // })
+            request.abort()
+        }
+        return request.continue()
+    });
+
     scraper === true ? await pptr.run() : await crawler.run();
 });
