@@ -3,9 +3,32 @@ const parsePrice = require('parse-price');
 
 const { log } = Apify.utils;
 
-async function parseItemDetail($, request, requestQueue, getReviews) {
+async function parseItemDetail($, request, session, requestQueue, getReviews) {
     const { sellerUrl, asin, detailUrl, reviewsUrl, delivery } = request.userData;
     const item = {};
+
+    const titleElem = $('#productTitle')
+    const priceElem = $('#priceblock_ourprice')
+
+    if (!titleElem.length || !priceElem.length) {
+        session.markBad()
+        request.retryCount++
+        throw new Error('Price not found. Session maybe blocked. Rotate session')
+    }
+
+    item.title = titleElem.text().trim()
+
+    let price = null
+    let priceParsed = null
+    if (priceElem.length !== 0) {
+        price = priceElem.text().trim().replace('Rs.', 'Rs')
+        priceParsed = parsePrice(price)
+    } else {
+        price = 'price not displayed'
+    }
+
+    item.price = price
+    item.priceParsed = priceParsed
     // const reviewsConunt = $('#acrCustomerReviewText').length !== 0 ? $('#acrCustomerReviewText').eq(0).text() : null;
     // const stars = $('.reviewCountTextLinkedHistogram').length !== 0 ? $('.reviewCountTextLinkedHistogram').attr('title').match(/(\d+\.\d+)|\d+/)[0] : null;
     const details = {};
@@ -61,18 +84,6 @@ async function parseItemDetail($, request, requestQueue, getReviews) {
             }
         }
     }
-
-    const priceElem = $('#priceblock_ourprice')
-    let price = null
-    let priceParsed = null
-    if (priceElem.length !== 0) {
-        price = priceElem.text().trim().replace('Rs.', 'Rs')
-        priceParsed = parsePrice(price)
-    } else {
-        price = 'price not displayed'
-    }
-    item.price = price
-    item.priceParsed = priceParsed
 
     // if (getReviews) {
     //     await requestQueue.addRequest({

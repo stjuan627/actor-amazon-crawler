@@ -59,7 +59,7 @@ async function runCrawler(params) {
         // extract info about item and about seller offers
     } else if (label === 'detail') {
         try {
-            const item = await detailParser($, request, requestQueue, getReviews);
+            const item = await detailParser($, request, session, requestQueue, getReviews);
             if (item) {
                 log.info(`Saving item url: ${request.url}`)
                 await saveItem('RESULT', request, item, input, env.defaultDatasetId, session);

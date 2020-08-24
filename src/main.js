@@ -3,8 +3,10 @@ const Apify = require('apify');
 const cheerio = require('cheerio');
 const createSearchUrls = require('./createSearchUrls');
 const CloudFlareUnBlocker = require('./unblocker');
+const detailParser = require('./parseItemDetail');
 const runCrawler = require('./runCrawler');
 const { updateCookies } = require('./updateCookies');
+const { saveItem } = require('./utils');
 
 const { log } = Apify.utils;
 // TODO: Add an option to limit number of results for each keyword
@@ -19,27 +21,27 @@ Apify.main(async () => {
     if (maxReviews && maxReviews > 0) {
         getReviews = true;
     }
-    let limitResults;
-    try{
-        switch (input.searchType) {
-            case "keywords":
-                if (maxReviews || maxReviews > 10) {
-                    limitResults = maxReviews > 10 ?
-                        (maxResults * (2 + maxReviews / 10)) + input.search.split(',').length :
-                        maxResults * 3 + input.search.split(',').length;
-                } else {
-                    limitResults = maxResults * 2 + input.search.split(',').length;
-                }
+    // let limitResults;
+    // try{
+    //     switch (input.searchType) {
+    //         case "keywords":
+    //             if (maxReviews || maxReviews > 10) {
+    //                 limitResults = maxReviews > 10 ?
+    //                     (maxResults * (2 + maxReviews / 10)) + input.search.split(',').length :
+    //                     maxResults * 3 + input.search.split(',').length;
+    //             } else {
+    //                 limitResults = maxResults * 2 + input.search.split(',').length;
+    //             }
 
-            default:
-                limitResults = maxReviews > 10 ? maxResults * (2 + maxReviews / 10) : maxResults === 0 ?
-                    maxResults : maxResults * 3;
+    //         default:
+    //             limitResults = maxReviews > 10 ? maxResults * (2 + maxReviews / 10) : maxResults === 0 ?
+    //                 maxResults : maxResults * 3;
 
-        }
-    } catch (e) {
-        limitResults = maxResults === 0 ? maxResults : maxResults * 3;
-    }
-    limitResults = !maxResults ? null : limitResults; //handle undefined or null
+    //     }
+    // } catch (e) {
+    //     limitResults = maxResults === 0 ? maxResults : maxResults * 3;
+    // }
+    // limitResults = !maxResults ? null : limitResults; //handle undefined or null
     const urls = await createSearchUrls(input);
 
     for (const searchUrl of urls) {
@@ -65,7 +67,7 @@ Apify.main(async () => {
         },
         proxyConfiguration,
         maxConcurrency: input.maxConcurrency || 5,
-        maxRequestsPerCrawl: limitResults || null,
+        // maxRequestsPerCrawl: limitResults || null,
         handlePageTimeoutSecs: 2.5 * 60,
         persistCookiesPerSession: true,
         handleRequestFunction: async ({ request, session }) => {
@@ -129,8 +131,9 @@ Apify.main(async () => {
             },
         },
         proxyConfiguration,
+        maxRequestRetries: input.maxRetires || 3,
         maxConcurrency: input.maxConcurrency || 5,
-        maxRequestsPerCrawl: limitResults || null,
+        // maxRequestsPerCrawl: limitResults || null,
         handlePageTimeoutSecs: 2.5 * 60,
         handleRequestTimeoutSecs: 60,
         persistCookiesPerSession: true,
@@ -180,7 +183,14 @@ Apify.main(async () => {
                 return document.body.outerHTML;
             });
             const $ = cheerio.load(pageHTML);
-            await runCrawler({$, session, request, requestQueue, input, getReviews, env});
+            // await runCrawler({$, session, request, requestQueue, input, getReviews, env});
+            const item = await detailParser($, request, session, requestQueue, getReviews)
+            if (item) {
+                log.info(`Saving item url: ${request.url}`)
+                await saveItem('RESULT', request, item, input, env.defaultDatasetId, session)
+            } else {
+                log.error('Detail parsing failed')
+            }
         },
         handleFailedRequestFunction: async ({ page, request }) => {
             log.info(`Request ${request.url} failed 4 times`);
