@@ -139,23 +139,23 @@ Apify.main(async () => {
         handleRequestTimeoutSecs: 60,
         persistCookiesPerSession: true,
         gotoFunction: async ({ page, request }) => {
-            await puppeteer.addInterceptRequestHandler(page, (request) => {
-                if (request.resourceType() === 'image' || request.resourceType() === 'video') {
-                    // return request.respond({
+            await puppeteer.addInterceptRequestHandler(page, (req) => {
+                if (req.resourceType() === 'image' || req.resourceType() === 'video') {
+                    // return req.respond({
                     //     statusCode: 200,
                     //     contentType: 'image/jpeg',
                     //     body: placeholderImageBuffer,
                     // })
-                    request.abort()
+                    req.abort()
                 }
-                return request.continue()
+                return req.continue()
             });
 
             return puppeteer.gotoExtended(page, request, { timeout: 60 * 1000 })
         },
         handlePageFunction: async ({ page, request, session, proxyInfo }) => {
             const { url, userData, userData: { label } } = request;
-            console.log('request url with proxy', url, proxyInfo)
+            log.info('request url with proxy', url, request.retryCount, proxyInfo)
             try {
                 await page.waitFor(3000);
                 await page.waitForSelector('#a-popover-root');
