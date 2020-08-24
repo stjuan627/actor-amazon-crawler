@@ -12,7 +12,7 @@ async function parseItemDetail($, request, session, requestQueue, getReviews) {
 
     if (!titleElem.length || !priceElem.length) {
         session.markBad()
-        throw new Error('Price not found. Session maybe blocked. Rotate session')
+        // throw new Error('Price not found. Session maybe blocked. Rotate session')
     }
 
     item.title = titleElem.text().trim()
