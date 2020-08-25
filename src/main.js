@@ -101,9 +101,9 @@ Apify.main(async () => {
                 || title.includes('Toutes nos excuses')
                 || title.includes('Tut uns Leid!')
                 || title.includes('Service Unavailable Error')) {
-                session.retire();
+                session.markBad();
                 // dont mark this request as bad, it is probably looking for working session
-                request.retryCount--;
+                // request.retryCount--;
                 // dont retry the request right away, wait a little bit
                 await Apify.utils.sleep(5000);
                 throw new Error('Session blocked, retiring. If you see this for a LONG time, stop the run - you don\'t have any working proxy right now.'
