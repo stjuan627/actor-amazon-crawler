@@ -56,7 +56,7 @@ Apify.main(async () => {
     });
 
     // Create crawler.
-    const crawler = new Apify.BasicCrawler({
+    const crawler = new Apify.CheerioCrawler({
         requestQueue,
         useSessionPool: true,
         sessionPoolOptions: {
@@ -71,45 +71,52 @@ Apify.main(async () => {
         // maxRequestsPerCrawl: limitResults || null,
         handlePageTimeoutSecs: 2.5 * 60,
         persistCookiesPerSession: true,
-        handleRequestFunction: async ({ request, session }) => {
+        handlePageFunction: async ({ $, request, response, session }) => {
             // log.info(session.id);
-            if(input.delivery !== ''){
-                let kukies = await Apify.getValue('puppeteerCookies');
-                if (!kukies) {
-                    const puppeteerCookies = await updateCookies({domain: request.userData.domain, delivery: input.delivery});
-                    kukies = puppeteerCookies;
-                    await Apify.setValue('puppeteerCookies',puppeteerCookies);
-                }
-                const cookies = [];
-                kukies.forEach(kukie => {
-                    if (kukie.name === "sp-cdn") {
-                        cookies.push({name: kukie.name, value: kukie.value});
-                    }
-                });
-                session.setPuppeteerCookies(cookies, request.url);
-            }
+            // if(input.delivery !== ''){
+            //     let kukies = await Apify.getValue('puppeteerCookies');
+            //     if (!kukies) {
+            //         const puppeteerCookies = await updateCookies({domain: request.userData.domain, delivery: input.delivery});
+            //         kukies = puppeteerCookies;
+            //         await Apify.setValue('puppeteerCookies',puppeteerCookies);
+            //     }
+            //     const cookies = [];
+            //     kukies.forEach(kukie => {
+            //         if (kukie.name === "sp-cdn") {
+            //             cookies.push({name: kukie.name, value: kukie.value});
+            //         }
+            //     });
+            //     session.setPuppeteerCookies(cookies, request.url);
+            // }
             // console.log(kukies)
             // log.info(session.getCookieString(request.url));
-            const responseRequest = await cloudFlareUnBlocker.unblock({ request, session });
-            const $ = cheerio.load(responseRequest.body);
+            // const responseRequest = await cloudFlareUnBlocker.unblock({ request, session });
+            // const $ = cheerio.load(responseRequest.body);
             // to handle blocked requests
             const title = $('title').length !== 0 ? $('title').text().trim() : '';
-            const { statusCode } = responseRequest;
+            const { statusCode } = response;
             if (statusCode !== 200
                 || title.includes('Robot Check')
                 || title.includes('CAPTCHA')
                 || title.includes('Toutes nos excuses')
                 || title.includes('Tut uns Leid!')
                 || title.includes('Service Unavailable Error')) {
-                session.retire();
+                session.markBad();
                 // dont mark this request as bad, it is probably looking for working session
-                request.retryCount--;
+                // request.retryCount--;
                 // dont retry the request right away, wait a little bit
                 await Apify.utils.sleep(5000);
                 throw new Error('Session blocked, retiring. If you see this for a LONG time, stop the run - you don\'t have any working proxy right now.'
                     + ' But by default this can happen for some time until we find working session.');
             }
-            await runCrawler({$, session, request, requestQueue, input, getReviews, env});
+            // await runCrawler({$, session, request, requestQueue, input, getReviews, env});
+            const item = await detailParser($, request, session, requestQueue, getReviews)
+            if (item) {
+                log.info(`Saving item url: ${request.url}`)
+                await saveItem('RESULT', request, item, input, env.defaultDatasetId, session)
+            } else {
+                log.error('Detail parsing failed')
+            }
         },
         handleFailedRequestFunction: async ({ request }) => {
             log.info(`Request ${request.url} failed 4 times`);
