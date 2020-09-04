@@ -8,32 +8,32 @@ async function parseItemDetail($, request, session, requestQueue, getReviews) {
     const item = {};
 
     const titleElem = $('#productTitle')
-    let priceElem = $('#price_inside_buybox')
-    if (!priceElem.length) {
-        priceElem = $('#priceblock_ourprice')
-    }
-    if (!priceElem.length) {
-        priceElem = $('#priceblock_saleprice')
-    }
+    // let priceElem = $('#price_inside_buybox')
+    // if (!priceElem.length) {
+    //     priceElem = $('#priceblock_ourprice')
+    // }
+    // if (!priceElem.length) {
+    //     priceElem = $('#priceblock_saleprice')
+    // }
 
-    if (!titleElem.length || !priceElem.length) {
+    if (!titleElem.length) {
         session.markBad()
         // throw new Error('Price not found. Session maybe blocked. Rotate session')
     }
 
     item.title = titleElem.text().trim()
 
-    let price = null
-    let priceParsed = null
-    if (priceElem.length !== 0) {
-        price = priceElem.text().trim().replace('Rs.', 'Rs')
-        priceParsed = parsePrice(price)
-    } else {
-        price = 'price not displayed'
-    }
+    // let price = null
+    // let priceParsed = null
+    // if (priceElem.length !== 0) {
+    //     price = priceElem.text().trim().replace('Rs.', 'Rs')
+    //     priceParsed = parsePrice(price)
+    // } else {
+    //     price = 'price not displayed'
+    // }
 
-    item.price = price
-    item.priceParsed = priceParsed
+    // item.price = price
+    // item.priceParsed = priceParsed
     // const reviewsConunt = $('#acrCustomerReviewText').length !== 0 ? $('#acrCustomerReviewText').eq(0).text() : null;
     // const stars = $('.reviewCountTextLinkedHistogram').length !== 0 ? $('.reviewCountTextLinkedHistogram').attr('title').match(/(\d+\.\d+)|\d+/)[0] : null;
     const details = {};
@@ -62,7 +62,7 @@ async function parseItemDetail($, request, session, requestQueue, getReviews) {
     // }
     item.asin = asin
     // item.InStock = $('#availability') ? true: false;
-    item.delivery = $('#delivery-message').text().trim();
+    // item.delivery = $('#delivery-message').text().trim();
     item.featureDesc = $('#featurebullets_feature_div').length !== 0 ? $('#featurebullets_feature_div').text().trim() : null;
     item.desc = $('#productDescription').length !== 0 ? $('#productDescription').text().trim() : null;
     // item.breadCrumbs = breadCrumbs;
